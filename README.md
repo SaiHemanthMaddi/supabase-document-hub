@@ -103,6 +103,9 @@ npm run build        # Production build
 npm run preview      # Preview production build
 npm run test         # Run tests
 npm run test:watch   # Watch tests
+npm run test:e2e     # Run Playwright E2E smoke tests
+npm run test:e2e:headed # Run E2E in headed mode
+npm run test:e2e:report # Open Playwright HTML report
 npm run lint         # Lint
 npm run format       # Prettier write
 npm run format:check # Prettier check
@@ -123,6 +126,16 @@ npm run release:major # Bump major version + create git tag
 - Changelog: `CHANGELOG.md`
 - Release guide: `docs/RELEASING.md`
 - GitHub release workflow: `.github/workflows/release.yml` (runs on pushed `v*` tags)
+
+## E2E Baseline
+
+- Playwright config: `playwright.config.ts`
+- Smoke suite: `e2e/auth-smoke.spec.ts`
+- Install browser binaries once:
+
+```bash
+npx playwright install chromium
+```
 
 ## Troubleshooting
 
