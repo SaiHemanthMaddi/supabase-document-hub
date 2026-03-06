@@ -2,6 +2,10 @@
 
 A full-stack document management web app built with React + Vite + TypeScript and Supabase.
 
+## Repository
+
+- GitHub: https://github.com/SaiHemanthMaddi/supabase-document-hub
+
 ## Key Features
 
 - Email/password auth (sign up, sign in, forgot/reset password)
@@ -94,12 +98,14 @@ This keeps avatar bucket/policies in the known working state.
 ## Scripts
 
 ```bash
-npm run dev         # Start dev server
-npm run build       # Production build
-npm run preview     # Preview production build
-npm run test        # Run tests
-npm run test:watch  # Watch tests
-npm run lint        # Lint
+npm run dev          # Start dev server
+npm run build        # Production build
+npm run preview      # Preview production build
+npm run test         # Run tests
+npm run test:watch   # Watch tests
+npm run lint         # Lint
+npm run format       # Prettier write
+npm run format:check # Prettier check
 ```
 
 ## Troubleshooting
@@ -120,6 +126,12 @@ Ensure:
 Ensure latest app code is running (route guards include recovery handling), then test with a newly generated reset email link.
 
 ## GitHub Push (First Time)
+
+Current remote used for this project:
+
+```text
+https://github.com/SaiHemanthMaddi/supabase-document-hub.git
+```
 
 If this folder is not yet a git repository:
 
