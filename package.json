@@ -13,7 +13,10 @@
     "test:watch": "vitest",
     "start": "vite",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.2",

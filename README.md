@@ -106,7 +106,16 @@ npm run test:watch   # Watch tests
 npm run lint         # Lint
 npm run format       # Prettier write
 npm run format:check # Prettier check
+npm run release:patch # Bump patch version + create git tag
+npm run release:minor # Bump minor version + create git tag
+npm run release:major # Bump major version + create git tag
 ```
+
+## Release Process
+
+- Changelog: `CHANGELOG.md`
+- Release guide: `docs/RELEASING.md`
+- GitHub release workflow: `.github/workflows/release.yml` (runs on pushed `v*` tags)
 
 ## Troubleshooting
 
