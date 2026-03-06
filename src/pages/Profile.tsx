@@ -43,13 +43,17 @@ function sanitizeFileName(name: string) {
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise<Blob>((resolve, reject) => {
     try {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('Could not process captured image.'));
-          return;
-        }
-        resolve(blob);
-      }, 'image/jpeg', 0.92);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Could not process captured image.'));
+            return;
+          }
+          resolve(blob);
+        },
+        'image/jpeg',
+        0.92,
+      );
     } catch {
       reject(new Error('Could not process captured image.'));
     }
@@ -65,7 +69,11 @@ function avatarImageStyle(cropX: number, cropY: number, zoom: number): React.CSS
   };
 }
 
-function validateProfileInputs(values: { displayName: string; phoneNumber: string; address: string }) {
+function validateProfileInputs(values: {
+  displayName: string;
+  phoneNumber: string;
+  address: string;
+}) {
   if (!values.displayName.trim()) {
     return 'Display name is required.';
   }
@@ -129,9 +137,7 @@ async function resolveAvatarBlobUrl(userId: string, currentPath: string | null) 
   (objectList ?? []).forEach((obj) => candidatePaths.add(toAvatarPath(userId, obj.name)));
 
   for (const path of candidatePaths) {
-    const { data, error } = await supabase.storage
-      .from('profile-avatars')
-      .download(path);
+    const { data, error } = await supabase.storage.from('profile-avatars').download(path);
     if (!error && data) {
       return { path, blobUrl: URL.createObjectURL(data) };
     }
@@ -211,13 +217,11 @@ export default function Profile() {
         const fallbackDisplayName =
           (user?.user_metadata?.display_name as string | undefined) ?? null;
         const fallbackAvatarPath = await resolveLatestAvatarPath(user!.id);
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user!.id,
-            display_name: fallbackDisplayName,
-            avatar_path: fallbackAvatarPath,
-          });
+        const { error: insertError } = await supabase.from('profiles').insert({
+          user_id: user!.id,
+          display_name: fallbackDisplayName,
+          avatar_path: fallbackAvatarPath,
+        });
         if (insertError && !insertError.message.toLowerCase().includes('duplicate')) {
           throw insertError;
         }
@@ -301,9 +305,7 @@ export default function Profile() {
       const avatarPath = profileQuery.data?.avatar_path;
       if (!avatarPath) return null;
 
-      const { data, error } = await supabase.storage
-        .from('profile-avatars')
-        .download(avatarPath);
+      const { data, error } = await supabase.storage.from('profile-avatars').download(avatarPath);
 
       if (error || !data) return null;
       return URL.createObjectURL(data);
@@ -364,7 +366,7 @@ export default function Profile() {
 
   const upsertProfile = async (
     nextAvatarPath?: string | null,
-    crop?: { x: number; y: number; zoom: number }
+    crop?: { x: number; y: number; zoom: number },
   ) => {
     if (!user?.id) throw new Error('You must be logged in.');
 
@@ -381,9 +383,7 @@ export default function Profile() {
       avatar_zoom: crop?.zoom ?? avatarZoom,
     };
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(payload, { onConflict: 'user_id' });
+    const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
 
     if (error) throw error;
   };
@@ -479,7 +479,13 @@ export default function Profile() {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ avatar_path: null, avatar_url: null, avatar_crop_x: 50, avatar_crop_y: 50, avatar_zoom: 1 })
+        .update({
+          avatar_path: null,
+          avatar_url: null,
+          avatar_crop_x: 50,
+          avatar_crop_y: 50,
+          avatar_zoom: 1,
+        })
         .eq('user_id', user.id);
       if (profileError) throw profileError;
     },
@@ -510,12 +516,20 @@ export default function Profile() {
 
   const startCropFlow = (file: File) => {
     if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
-      toast({ variant: 'destructive', title: 'Invalid file', description: 'Please choose an image file.' });
+      toast({
+        variant: 'destructive',
+        title: 'Invalid file',
+        description: 'Please choose an image file.',
+      });
       return;
     }
 
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
-      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum avatar size is 5 MB.' });
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Maximum avatar size is 5 MB.',
+      });
       return;
     }
 
@@ -587,7 +601,11 @@ export default function Profile() {
     try {
       blob = await canvasToBlob(canvas);
     } catch {
-      toast({ variant: 'destructive', title: 'Capture failed', description: 'Could not capture photo.' });
+      toast({
+        variant: 'destructive',
+        title: 'Capture failed',
+        description: 'Could not capture photo.',
+      });
       return;
     }
 
@@ -674,23 +692,23 @@ export default function Profile() {
               {profileQuery.isLoading ? (
                 <Skeleton className="h-24 w-24 rounded-full" />
               ) : (
-              <Avatar className="h-24 w-24 overflow-hidden">
-                {avatarSrc && !avatarLoadFailed ? (
-                  <img
-                    src={avatarSrc}
-                    alt="User avatar"
-                    className="h-full w-full object-cover"
-                    style={avatarImageStyle(avatarCropX, avatarCropY, avatarZoom)}
-                    onError={() => setAvatarLoadFailed(true)}
-                  />
-                ) : null}
-                <AvatarFallback
-                  className="bg-primary text-primary-foreground text-2xl"
-                  style={{ display: avatarSrc && !avatarLoadFailed ? 'none' : 'flex' }}
-                >
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="h-24 w-24 overflow-hidden">
+                  {avatarSrc && !avatarLoadFailed ? (
+                    <img
+                      src={avatarSrc}
+                      alt="User avatar"
+                      className="h-full w-full object-cover"
+                      style={avatarImageStyle(avatarCropX, avatarCropY, avatarZoom)}
+                      onError={() => setAvatarLoadFailed(true)}
+                    />
+                  ) : null}
+                  <AvatarFallback
+                    className="bg-primary text-primary-foreground text-2xl"
+                    style={{ display: avatarSrc && !avatarLoadFailed ? 'none' : 'flex' }}
+                  >
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
               )}
               <input
                 ref={systemInputRef}
@@ -730,7 +748,11 @@ export default function Profile() {
                   type="button"
                   variant="outline"
                   onClick={() => removeAvatarMutation.mutate()}
-                  disabled={!profileQuery.data?.avatar_path || avatarUploadMutation.isPending || removeAvatarMutation.isPending}
+                  disabled={
+                    !profileQuery.data?.avatar_path ||
+                    avatarUploadMutation.isPending ||
+                    removeAvatarMutation.isPending
+                  }
                 >
                   {removeAvatarMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -751,9 +773,7 @@ export default function Profile() {
                 <p className="text-xs text-muted-foreground">
                   Profile updated: {profileLastUpdated}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Photo updated: {photoUpdatedAt}
-                </p>
+                <p className="text-xs text-muted-foreground">Photo updated: {photoUpdatedAt}</p>
               </div>
             </CardContent>
           </Card>
@@ -815,7 +835,11 @@ export default function Profile() {
                   </div>
                   <Button
                     onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending || avatarUploadMutation.isPending || removeAvatarMutation.isPending}
+                    disabled={
+                      saveMutation.isPending ||
+                      avatarUploadMutation.isPending ||
+                      removeAvatarMutation.isPending
+                    }
                   >
                     {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Changes
@@ -840,14 +864,24 @@ export default function Profile() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-md border border-border bg-black">
-              <video ref={videoRef} className="h-72 w-full object-cover" autoPlay playsInline muted />
+              <video
+                ref={videoRef}
+                className="h-72 w-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
             </div>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeCameraModal}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={closeCameraModal}>
+              Cancel
+            </Button>
             {!cameraError && (
-              <Button type="button" onClick={takePhoto}>Take Photo</Button>
+              <Button type="button" onClick={takePhoto}>
+                Take Photo
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
@@ -913,8 +947,13 @@ export default function Profile() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseCropModal}>Cancel</Button>
-            <Button onClick={handleApplyCrop} disabled={avatarUploadMutation.isPending || !pendingAvatarFile}>
+            <Button variant="outline" onClick={handleCloseCropModal}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApplyCrop}
+              disabled={avatarUploadMutation.isPending || !pendingAvatarFile}
+            >
               {avatarUploadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Apply & Upload
             </Button>

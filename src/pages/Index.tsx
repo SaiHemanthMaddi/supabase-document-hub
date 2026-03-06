@@ -80,7 +80,9 @@ export default function Index() {
     }).length;
 
     const totalStorageBytes = docs.reduce((sum, doc) => sum + doc.size_bytes, 0);
-    const latestUpload = docs[0]?.created_at ? new Date(docs[0].created_at).toLocaleString() : 'No uploads yet';
+    const latestUpload = docs[0]?.created_at
+      ? new Date(docs[0].created_at).toLocaleString()
+      : 'No uploads yet';
 
     return {
       totalDocuments: docs.length,
@@ -229,7 +231,9 @@ export default function Index() {
                   {recentActivities.map((activity) => (
                     <div key={activity.id} className="rounded-md border border-border p-3">
                       <p className="text-sm text-foreground">{activityLabel(activity)}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(activity.created_at).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(activity.created_at).toLocaleString()}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -241,4 +245,3 @@ export default function Index() {
     </AppLayout>
   );
 }
-

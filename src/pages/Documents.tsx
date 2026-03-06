@@ -63,9 +63,7 @@ export default function Documents() {
     queryKey: ['bookmarks', user?.id],
     enabled: Boolean(user?.id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select('*');
+      const { data, error } = await supabase.from('bookmarks').select('*');
 
       if (error) throw error;
       return (data ?? []) as BookmarkRow[];
@@ -74,7 +72,7 @@ export default function Documents() {
 
   const bookmarkedIds = useMemo(
     () => new Set((bookmarksQuery.data ?? []).map((item) => item.document_id)),
-    [bookmarksQuery.data]
+    [bookmarksQuery.data],
   );
 
   const uploadMutation = useMutation({
@@ -139,10 +137,7 @@ export default function Documents() {
     mutationFn: async (doc: DocumentRow) => {
       if (!user?.id) throw new Error('You must be signed in.');
 
-      const { error: deleteRowError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', doc.id);
+      const { error: deleteRowError } = await supabase.from('documents').delete().eq('id', doc.id);
 
       if (deleteRowError) throw deleteRowError;
 
@@ -224,7 +219,8 @@ export default function Documents() {
       await queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
       toast({
         title: state === 'added' ? 'Bookmarked' : 'Bookmark removed',
-        description: state === 'added' ? 'Document saved to bookmarks.' : 'Document removed from bookmarks.',
+        description:
+          state === 'added' ? 'Document saved to bookmarks.' : 'Document removed from bookmarks.',
       });
     },
     onError: (error: Error) => {
@@ -312,12 +308,7 @@ export default function Documents() {
             <p className="text-muted-foreground">Upload, organize, and access your files.</p>
           </div>
           <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
+            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadMutation.isPending}
@@ -351,7 +342,9 @@ export default function Documents() {
                 <FileText className="h-12 w-12 text-muted-foreground" />
                 <div className="text-center">
                   <p className="text-lg font-medium text-foreground">No documents yet</p>
-                  <p className="text-sm text-muted-foreground">Upload your first document to get started.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Upload your first document to get started.
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -371,9 +364,12 @@ export default function Documents() {
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium text-foreground">{doc.title}</p>
-                      <p className="truncate text-sm text-muted-foreground">{doc.original_filename}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {doc.original_filename}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatFileSize(doc.size_bytes)} • {new Date(doc.created_at).toLocaleString()}
+                        {formatFileSize(doc.size_bytes)} •{' '}
+                        {new Date(doc.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -408,4 +404,3 @@ export default function Documents() {
     </AppLayout>
   );
 }
-

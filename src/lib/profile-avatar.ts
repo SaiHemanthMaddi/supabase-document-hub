@@ -1,13 +1,13 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
-const AVATAR_BUCKET = "profile-avatars";
+const AVATAR_BUCKET = 'profile-avatars';
 
 export async function resolveLatestAvatarPath(userId: string): Promise<string | null> {
   const { data: objectList, error: listError } = await supabase.storage
     .from(AVATAR_BUCKET)
     .list(userId, {
       limit: 1,
-      sortBy: { column: "created_at", order: "desc" },
+      sortBy: { column: 'created_at', order: 'desc' },
     });
 
   if (listError || !objectList?.length) return null;
@@ -16,16 +16,16 @@ export async function resolveLatestAvatarPath(userId: string): Promise<string | 
 
 export async function patchProfileAvatarPath(userId: string, avatarPath: string) {
   const { error } = await supabase
-    .from("profiles")
+    .from('profiles')
     .update({ avatar_path: avatarPath, avatar_url: null })
-    .eq("user_id", userId);
+    .eq('user_id', userId);
 
   if (error) throw error;
 }
 
 export async function ensureProfileAvatarPath(
   userId: string,
-  currentPath: string | null | undefined
+  currentPath: string | null | undefined,
 ): Promise<string | null> {
   if (currentPath) return currentPath;
   const latestPath = await resolveLatestAvatarPath(userId);
@@ -37,7 +37,7 @@ export async function ensureProfileAvatarPath(
 export async function createAvatarSignedUrlWithFallback(
   userId: string,
   avatarPath: string | null | undefined,
-  expiresInSeconds = 60 * 60
+  expiresInSeconds = 60 * 60,
 ): Promise<string | null> {
   if (!avatarPath) return null;
 
@@ -48,14 +48,14 @@ export async function createAvatarSignedUrlWithFallback(
   if (!first.error && first.data?.signedUrl) return first.data.signedUrl;
 
   const latestPath = await resolveLatestAvatarPath(userId);
-  if (!latestPath) throw (first.error ?? new Error("Could not resolve avatar URL."));
+  if (!latestPath) throw first.error ?? new Error('Could not resolve avatar URL.');
 
   const second = await supabase.storage
     .from(AVATAR_BUCKET)
     .createSignedUrl(latestPath, expiresInSeconds);
 
   if (second.error || !second.data?.signedUrl) {
-    throw (second.error ?? new Error("Could not resolve avatar URL."));
+    throw second.error ?? new Error('Could not resolve avatar URL.');
   }
 
   if (latestPath !== avatarPath) {
@@ -65,12 +65,12 @@ export async function createAvatarSignedUrlWithFallback(
   return second.data.signedUrl;
 }
 
-export async function createAvatarBlobUrl(avatarPath: string | null | undefined): Promise<string | null> {
+export async function createAvatarBlobUrl(
+  avatarPath: string | null | undefined,
+): Promise<string | null> {
   if (!avatarPath) return null;
 
-  const { data, error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .download(avatarPath);
+  const { data, error } = await supabase.storage.from(AVATAR_BUCKET).download(avatarPath);
 
   if (error || !data) return null;
   return URL.createObjectURL(data);

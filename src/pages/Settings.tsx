@@ -217,8 +217,12 @@ export default function Settings() {
     }
   };
 
-  const lastSignIn = user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Unavailable';
-  const accountCreated = user?.created_at ? new Date(user.created_at).toLocaleString() : 'Unavailable';
+  const lastSignIn = user?.last_sign_in_at
+    ? new Date(user.last_sign_in_at).toLocaleString()
+    : 'Unavailable';
+  const accountCreated = user?.created_at
+    ? new Date(user.created_at).toLocaleString()
+    : 'Unavailable';
 
   return (
     <AppLayout>
@@ -287,10 +291,7 @@ export default function Settings() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={handlePasswordUpdate}
-                disabled={!supabaseReady || isBusy}
-              >
+              <Button onClick={handlePasswordUpdate} disabled={!supabaseReady || isBusy}>
                 {isSavingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Update Password
               </Button>

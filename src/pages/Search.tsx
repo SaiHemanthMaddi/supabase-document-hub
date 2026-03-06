@@ -68,7 +68,7 @@ export default function Search() {
 
   const bookmarkedIds = useMemo(
     () => new Set((bookmarksQuery.data ?? []).map((item) => item.document_id)),
-    [bookmarksQuery.data]
+    [bookmarksQuery.data],
   );
 
   const bookmarkMutation = useMutation({
@@ -96,7 +96,8 @@ export default function Search() {
       await queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
       toast({
         title: state === 'added' ? 'Bookmarked' : 'Bookmark removed',
-        description: state === 'added' ? 'Document saved to bookmarks.' : 'Document removed from bookmarks.',
+        description:
+          state === 'added' ? 'Document saved to bookmarks.' : 'Document removed from bookmarks.',
       });
     },
     onError: (error: Error) => {
@@ -110,7 +111,7 @@ export default function Search() {
 
   const filteredDocs = useMemo(
     () => (documentsQuery.data ?? []).filter((doc) => matchesFilter(doc, fileFilter)),
-    [documentsQuery.data, fileFilter]
+    [documentsQuery.data, fileFilter],
   );
 
   const handleDownload = async (doc: DocumentRow) => {
@@ -149,10 +150,30 @@ export default function Search() {
             />
           </div>
           <div className="flex gap-2">
-            <Button variant={fileFilter === 'all' ? 'default' : 'outline'} onClick={() => setFileFilter('all')}>All</Button>
-            <Button variant={fileFilter === 'pdf' ? 'default' : 'outline'} onClick={() => setFileFilter('pdf')}>PDF</Button>
-            <Button variant={fileFilter === 'image' ? 'default' : 'outline'} onClick={() => setFileFilter('image')}>Images</Button>
-            <Button variant={fileFilter === 'other' ? 'default' : 'outline'} onClick={() => setFileFilter('other')}>Other</Button>
+            <Button
+              variant={fileFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setFileFilter('all')}
+            >
+              All
+            </Button>
+            <Button
+              variant={fileFilter === 'pdf' ? 'default' : 'outline'}
+              onClick={() => setFileFilter('pdf')}
+            >
+              PDF
+            </Button>
+            <Button
+              variant={fileFilter === 'image' ? 'default' : 'outline'}
+              onClick={() => setFileFilter('image')}
+            >
+              Images
+            </Button>
+            <Button
+              variant={fileFilter === 'other' ? 'default' : 'outline'}
+              onClick={() => setFileFilter('other')}
+            >
+              Other
+            </Button>
           </div>
         </div>
 
@@ -181,12 +202,18 @@ export default function Search() {
             ) : (
               <div className="space-y-3">
                 {filteredDocs.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                  >
                     <div className="min-w-0">
                       <p className="truncate font-medium text-foreground">{doc.title}</p>
-                      <p className="truncate text-sm text-muted-foreground">{doc.original_filename}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {doc.original_filename}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {doc.mime_type} • {formatFileSize(doc.size_bytes)} • {new Date(doc.created_at).toLocaleString()}
+                        {doc.mime_type} ï¿½ {formatFileSize(doc.size_bytes)} ï¿½{' '}
+                        {new Date(doc.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

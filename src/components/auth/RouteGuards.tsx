@@ -1,6 +1,6 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 function FullPageSpinner() {
   return (
@@ -14,8 +14,8 @@ export function ProtectedRoute() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
-  const isPasswordRecoveryLink = hashParams.get("type") === "recovery";
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const isPasswordRecoveryLink = hashParams.get('type') === 'recovery';
   if (isPasswordRecoveryLink) {
     return <Navigate to={`/auth?mode=reset${location.hash}`} replace />;
   }
@@ -31,9 +31,9 @@ export function PublicOnlyRoute() {
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
-  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
   const isPasswordRecoveryRoute =
-    searchParams.get("mode") === "reset" || hashParams.get("type") === "recovery";
+    searchParams.get('mode') === 'reset' || hashParams.get('type') === 'recovery';
 
   if (loading) return <FullPageSpinner />;
   if (user && !isPasswordRecoveryRoute) return <Navigate to="/" replace />;

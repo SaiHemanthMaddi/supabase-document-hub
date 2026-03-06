@@ -1,13 +1,17 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase-config";
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { isSupabaseConfigured } from '@/lib/supabase-config';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -15,16 +19,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const DEMO_USER: User = {
-  id: "demo-user-123",
-  aud: "authenticated",
-  role: "authenticated",
-  email: "demo@example.com",
+  id: 'demo-user-123',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'demo@example.com',
   email_confirmed_at: new Date().toISOString(),
-  phone: "",
+  phone: '',
   confirmed_at: new Date().toISOString(),
   last_sign_in_at: new Date().toISOString(),
   app_metadata: {},
-  user_metadata: { display_name: "Demo User" },
+  user_metadata: { display_name: 'Demo User' },
   identities: [],
   is_anonymous: false,
   created_at: new Date().toISOString(),
@@ -37,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const supabaseConfigured = isSupabaseConfigured();
-  const isDemoAuthEnabled = import.meta.env.VITE_ENABLE_DEMO_AUTH === "true";
+  const isDemoAuthEnabled = import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true';
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -68,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabaseConfigured) {
       return {
         error: new Error(
-          "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY."
+          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.',
         ),
       };
     }
@@ -89,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabaseConfigured) {
       return {
         error: new Error(
-          "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY."
+          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.',
         ),
       };
     }
@@ -113,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

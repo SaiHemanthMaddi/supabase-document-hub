@@ -1,21 +1,21 @@
-import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { ProtectedRoute, PublicOnlyRoute } from "@/components/auth/RouteGuards";
-import { Loader2 } from "lucide-react";
+import { Suspense, lazy } from 'react';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import { ProtectedRoute, PublicOnlyRoute } from '@/components/auth/RouteGuards';
+import { Loader2 } from 'lucide-react';
 
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Documents = lazy(() => import("./pages/Documents"));
-const Search = lazy(() => import("./pages/Search"));
-const Bookmarks = lazy(() => import("./pages/Bookmarks"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Settings = lazy(() => import("./pages/Settings"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const Index = lazy(() => import('./pages/Index'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Documents = lazy(() => import('./pages/Documents'));
+const Search = lazy(() => import('./pages/Search'));
+const Bookmarks = lazy(() => import('./pages/Bookmarks'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient();
 

@@ -3,7 +3,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Loader2 } from 'lucide-react';
 import { z } from 'zod';
@@ -112,7 +119,8 @@ export default function Auth() {
         } else {
           toast({
             title: 'Check your email',
-            description: 'We sent you a confirmation link. Please check your email to verify your account.',
+            description:
+              'We sent you a confirmation link. Please check your email to verify your account.',
           });
         }
       } else {
@@ -208,9 +216,7 @@ export default function Auth() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
             )}
             <div className="space-y-2">
@@ -223,9 +229,7 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>
             {isResetMode && (
               <div className="space-y-2">

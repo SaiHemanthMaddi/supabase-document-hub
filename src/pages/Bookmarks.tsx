@@ -40,7 +40,9 @@ export default function Bookmarks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookmarks')
-        .select('id, created_at, document_id, documents:document_id(id, title, original_filename, mime_type, size_bytes, storage_path, created_at)')
+        .select(
+          'id, created_at, document_id, documents:document_id(id, title, original_filename, mime_type, size_bytes, storage_path, created_at)',
+        )
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -118,18 +120,28 @@ export default function Bookmarks() {
                 <Bookmark className="h-12 w-12 text-muted-foreground" />
                 <div className="text-center">
                   <p className="text-lg font-medium text-foreground">No bookmarks yet</p>
-                  <p className="text-sm text-muted-foreground">Save documents to access them quickly later</p>
+                  <p className="text-sm text-muted-foreground">
+                    Save documents to access them quickly later
+                  </p>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                  >
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">{item.documents?.title}</p>
-                      <p className="truncate text-sm text-muted-foreground">{item.documents?.original_filename}</p>
+                      <p className="truncate font-medium text-foreground">
+                        {item.documents?.title}
+                      </p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {item.documents?.original_filename}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {item.documents?.mime_type} • {formatFileSize(item.documents?.size_bytes ?? 0)}
+                        {item.documents?.mime_type} ï¿½{' '}
+                        {formatFileSize(item.documents?.size_bytes ?? 0)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

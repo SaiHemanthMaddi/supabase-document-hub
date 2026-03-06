@@ -16,9 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       {!isMobile && <Sidebar />}
       <div className={`flex flex-col ${!isMobile ? 'ml-64' : ''}`}>
         <Header />
-        <main className={`flex-1 p-4 md:p-6 ${isMobile ? 'pb-20' : ''}`}>
-          {children}
-        </main>
+        <main className={`flex-1 p-4 md:p-6 ${isMobile ? 'pb-20' : ''}`}>{children}</main>
       </div>
       {isMobile && <BottomNav />}
     </div>
