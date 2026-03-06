@@ -83,6 +83,9 @@ VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-key>
 # optional:
 VITE_ENABLE_DEMO_AUTH=false
+VITE_MONITORING_ENABLED=false
+VITE_MONITORING_INGEST_URL=
+VITE_MONITORING_APP_NAME=document-hub
 ```
 
 ## Install & Run
@@ -153,6 +156,7 @@ npm run release:major # Bump major version + create git tag
 - Architecture: `docs/ARCHITECTURE.md`
 - Releasing: `docs/RELEASING.md`
 - Security: `docs/SECURITY.md`
+- Monitoring: `docs/MONITORING.md`
 - Contribution guide: `CONTRIBUTING.md`
 
 ## E2E Baseline
