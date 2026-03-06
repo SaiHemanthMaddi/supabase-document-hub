@@ -25,6 +25,27 @@ A full-stack document management web app built with React + Vite + TypeScript an
   - Sign out current session / all sessions
 - Supabase RLS and storage policy hardening
 
+## Screenshots and Demo
+
+Add your images/GIFs to `docs/assets/` using the names below.
+
+### App Screenshots
+
+| Screen    | Preview                                               |
+| --------- | ----------------------------------------------------- |
+| Auth      | ![Auth Screen](docs/assets/auth-screen.png)           |
+| Dashboard | ![Dashboard Screen](docs/assets/dashboard-screen.png) |
+| Documents | ![Documents Screen](docs/assets/documents-screen.png) |
+| Profile   | ![Profile Screen](docs/assets/profile-screen.png)     |
+| Settings  | ![Settings Screen](docs/assets/settings-screen.png)   |
+
+### Demo GIFs
+
+| Flow                         | Preview                                           |
+| ---------------------------- | ------------------------------------------------- |
+| Upload + Bookmark + Download | ![Documents Flow](docs/assets/documents-flow.gif) |
+| Profile Avatar Update        | ![Profile Flow](docs/assets/profile-flow.gif)     |
+
 ## Tech Stack
 
 - Frontend: React 18, TypeScript, Vite
