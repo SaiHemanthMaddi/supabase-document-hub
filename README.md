@@ -127,6 +127,12 @@ npm run release:major # Bump major version + create git tag
 - Release guide: `docs/RELEASING.md`
 - GitHub release workflow: `.github/workflows/release.yml` (runs on pushed `v*` tags)
 
+## Documentation
+
+- Architecture: `docs/ARCHITECTURE.md`
+- Releasing: `docs/RELEASING.md`
+- Contribution guide: `CONTRIBUTING.md`
+
 ## E2E Baseline
 
 - Playwright config: `playwright.config.ts`
