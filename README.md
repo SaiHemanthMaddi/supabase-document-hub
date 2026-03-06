@@ -152,6 +152,7 @@ npm run release:major # Bump major version + create git tag
 
 - Architecture: `docs/ARCHITECTURE.md`
 - Releasing: `docs/RELEASING.md`
+- Security: `docs/SECURITY.md`
 - Contribution guide: `CONTRIBUTING.md`
 
 ## E2E Baseline
