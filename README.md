@@ -106,10 +106,17 @@ npm run test:watch   # Watch tests
 npm run lint         # Lint
 npm run format       # Prettier write
 npm run format:check # Prettier check
+npm run seed:help    # Print seed data setup instructions
 npm run release:patch # Bump patch version + create git tag
 npm run release:minor # Bump minor version + create git tag
 npm run release:major # Bump major version + create git tag
 ```
+
+## Seed Data (Optional)
+
+- Seed SQL path: `supabase/seeds/20260306110000_seed_demo_data.sql`
+- Run `npm run seed:help` for quick instructions.
+- Execute the SQL in Supabase SQL Editor after applying migrations.
 
 ## Release Process
 
