@@ -1,248 +1,89 @@
-﻿import { useMemo, useRef } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Upload, FileText, Download, Trash2, Loader2, Bookmark } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Upload, FileText, Download, Trash2, Loader2, Bookmark, Eye, MoreVertical, Info, CheckCircle2, ChevronDown, SortAsc, SortDesc, X, Search } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDocuments, type DocumentRow } from '@/hooks/useDocuments';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { formatFileSize } from '@/lib/formatters';
+import { MAX_DOCUMENT_SIZE_BYTES, ALLOWED_DOCUMENT_MIME_TYPES } from '@/lib/constants';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
 import { logActivity } from '@/lib/activity';
 
-type DocumentRow = Tables<'documents'>;
-type BookmarkRow = Tables<'bookmarks'>;
+export type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'size-asc' | 'size-desc';
 
-function sanitizeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
-}
-
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
-
-const MAX_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024;
-const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
-  'application/pdf',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-]);
 
 export default function Documents() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [fileFilter, setFileFilter] = useState<'all' | 'pdf' | 'image' | 'other'>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [detailsDoc, setDetailsDoc] = useState<DocumentRow | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
+  const {
+    documents,
+    isLoading,
+    isError,
+    uploadDocument,
+    isUploading,
+    deleteDocument,
+    batchDeleteDocuments,
+    downloadDocument,
+  } = useDocuments();
 
-  const documentsQuery = useQuery({
-    queryKey: ['documents', user?.id],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const { bookmarkedIds, toggleBookmark } = useBookmarks();
 
-      if (error) throw error;
-      return (data ?? []) as DocumentRow[];
-    },
-  });
+  const handleBatchDelete = async () => {
+    const docsToDelete = documents.filter((d) => selectedIds.has(d.id));
+    if (docsToDelete.length === 0) return;
+    if (confirm(`Are you sure you want to delete ${docsToDelete.length} documents?`)) {
+      await batchDeleteDocuments(docsToDelete);
+    }
+  };
 
-  const bookmarksQuery = useQuery({
-    queryKey: ['bookmarks', user?.id],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase.from('bookmarks').select('*');
+  const handleBatchDownload = async () => {
+    const docsToDownload = documents.filter((d) => selectedIds.has(d.id));
+    for (const doc of docsToDownload) {
+      await downloadDocument(doc);
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  };
 
-      if (error) throw error;
-      return (data ?? []) as BookmarkRow[];
-    },
-  });
-
-  const bookmarkedIds = useMemo(
-    () => new Set((bookmarksQuery.data ?? []).map((item) => item.document_id)),
-    [bookmarksQuery.data],
-  );
-
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      if (!user?.id) throw new Error('You must be signed in to upload files.');
-
-      const storagePath = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(storagePath, file, {
-          contentType: file.type || 'application/octet-stream',
-          upsert: false,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const title = file.name.replace(/\.[^/.]+$/, '') || file.name;
-      const { data: insertedDoc, error: insertError } = await supabase
-        .from('documents')
-        .insert({
-          user_id: user.id,
-          title,
-          original_filename: file.name,
-          mime_type: file.type || 'application/octet-stream',
-          size_bytes: file.size,
-          storage_path: storagePath,
-        })
-        .select('*')
-        .single();
-
-      if (insertError) {
-        await supabase.storage.from('documents').remove([storagePath]);
-        throw insertError;
-      }
-
-      await logActivity({
-        user_id: user.id,
-        event_type: 'document_uploaded',
-        entity_type: 'document',
-        entity_id: insertedDoc.id,
-        metadata: {
-          title: insertedDoc.title,
-          original_filename: insertedDoc.original_filename,
-          size_bytes: insertedDoc.size_bytes,
-        },
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['documents', user?.id] });
-      toast({ title: 'Uploaded', description: 'Document uploaded successfully.' });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Upload failed',
-        description: error.message,
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (doc: DocumentRow) => {
-      if (!user?.id) throw new Error('You must be signed in.');
-
-      const { error: deleteRowError } = await supabase.from('documents').delete().eq('id', doc.id);
-
-      if (deleteRowError) throw deleteRowError;
-
-      const { error: deleteStorageError } = await supabase.storage
-        .from('documents')
-        .remove([doc.storage_path]);
-
-      if (deleteStorageError) {
-        toast({
-          variant: 'destructive',
-          title: 'Storage cleanup issue',
-          description: 'Metadata deleted, but file cleanup failed. Retry later.',
-        });
-      }
-
-      await logActivity({
-        user_id: user.id,
-        event_type: 'document_deleted',
-        entity_type: 'document',
-        entity_id: doc.id,
-        metadata: {
-          title: doc.title,
-          original_filename: doc.original_filename,
-        },
-      });
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['documents', user?.id] }),
-        queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] }),
-      ]);
-      toast({ title: 'Deleted', description: 'Document removed.' });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Delete failed',
-        description: error.message,
-      });
-    },
-  });
-
-  const bookmarkMutation = useMutation({
-    mutationFn: async (doc: DocumentRow) => {
-      if (!user?.id) throw new Error('You must be signed in to bookmark files.');
-
-      if (bookmarkedIds.has(doc.id)) {
-        const { error } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('document_id', doc.id);
-        if (error) throw error;
-        await logActivity({
-          user_id: user.id,
-          event_type: 'bookmark_removed',
-          entity_type: 'document',
-          entity_id: doc.id,
-          metadata: { title: doc.title },
-        });
-        return 'removed';
-      }
-
-      const { error } = await supabase.from('bookmarks').insert({
-        user_id: user.id,
-        document_id: doc.id,
-      });
-      if (error) throw error;
-      await logActivity({
-        user_id: user.id,
-        event_type: 'bookmark_added',
-        entity_type: 'document',
-        entity_id: doc.id,
-        metadata: { title: doc.title },
-      });
-      return 'added';
-    },
-    onSuccess: async (state) => {
-      await queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
-      toast({
-        title: state === 'added' ? 'Bookmarked' : 'Bookmark removed',
-        description:
-          state === 'added' ? 'Document saved to bookmarks.' : 'Document removed from bookmarks.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Bookmark failed',
-        description: error.message,
-      });
-    },
-  });
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     if (!ALLOWED_DOCUMENT_MIME_TYPES.has(file.type)) {
       toast({
         variant: 'destructive',
         title: 'Unsupported file type',
         description: 'Please upload PDF, Office docs, text files, or PNG/JPEG/WEBP images.',
       });
-      event.target.value = '';
       return;
     }
 
@@ -252,52 +93,114 @@ export default function Documents() {
         title: 'File too large',
         description: 'Maximum document size is 20 MB.',
       });
-      event.target.value = '';
       return;
     }
 
-    await uploadMutation.mutateAsync(file);
+    await uploadDocument(file);
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
     event.target.value = '';
   };
 
-  const handleDownload = async (doc: DocumentRow) => {
-    if (!user?.id) {
-      toast({
-        variant: 'destructive',
-        title: 'Download failed',
-        description: 'You must be signed in to download files.',
-      });
-      return;
-    }
-
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(doc.storage_path, 60);
-
-    if (error || !data?.signedUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Download failed',
-        description: error?.message || 'Could not create a download link.',
-      });
-      return;
-    }
-
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-
-    await logActivity({
-      user_id: user.id,
-      event_type: 'document_downloaded',
-      entity_type: 'document',
-      entity_id: doc.id,
-      metadata: {
-        title: doc.title,
-        original_filename: doc.original_filename,
-      },
-    });
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
   };
 
-  const docs = documentsQuery.data ?? [];
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handleDownload = async (doc: DocumentRow) => {
+    await downloadDocument(doc);
+  };
+
+  const docs = useMemo(() => {
+    let filtered = documents;
+    
+    if (searchQuery.trim()) {
+      const term = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(doc => 
+        doc.title.toLowerCase().includes(term) || 
+        doc.original_filename.toLowerCase().includes(term)
+      );
+    }
+
+    if (fileFilter !== 'all') {
+      if (fileFilter === 'pdf') {
+        filtered = filtered.filter(doc => doc.mime_type === 'application/pdf');
+      } else if (fileFilter === 'image') {
+        filtered = filtered.filter(doc => doc.mime_type.startsWith('image/'));
+      } else {
+        filtered = filtered.filter(doc => !doc.mime_type.startsWith('image/') && doc.mime_type !== 'application/pdf');
+      }
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'name-asc':
+          return a.title.localeCompare(b.title);
+        case 'name-desc':
+          return b.title.localeCompare(a.title);
+        case 'size-asc':
+          return a.size_bytes - b.size_bytes;
+        case 'size-desc':
+          return b.size_bytes - a.size_bytes;
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [documents, searchQuery, fileFilter, sortBy]);
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === docs.length && docs.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(docs.map(d => d.id)));
+    }
+  };
+
+  const categories = useMemo(() => {
+    const counts = {
+      all: documents.length,
+      pdf: documents.filter(d => d.mime_type === 'application/pdf').length,
+      image: documents.filter(d => d.mime_type.startsWith('image/')).length,
+      other: documents.filter(d => !d.mime_type.startsWith('image/') && d.mime_type !== 'application/pdf').length,
+    };
+    return [
+      { id: 'all', name: 'All Files', icon: <FileText className="h-4 w-4" />, count: counts.all },
+      { id: 'pdf', name: 'PDFs', icon: <FileText className="h-4 w-4 text-red-500" />, count: counts.pdf },
+      { id: 'image', name: 'Images', icon: <Eye className="h-4 w-4 text-blue-500" />, count: counts.image },
+      { id: 'other', name: 'Others', icon: <Info className="h-4 w-4 text-amber-500" />, count: counts.other },
+    ];
+  }, [documents]);
 
   return (
     <AppLayout>
@@ -311,9 +214,9 @@ export default function Documents() {
             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
             <Button
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploadMutation.isPending}
+              disabled={isUploading}
             >
-              {uploadMutation.isPending ? (
+              {isUploading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Upload className="mr-2 h-4 w-4" />
@@ -323,76 +226,182 @@ export default function Documents() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Documents</CardTitle>
-            <CardDescription>All uploaded files for your account.</CardDescription>
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 md:col-span-3 space-y-4">
+            <Card>
+              <CardHeader className="pb-3 px-6">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Categories</CardTitle>
+              </CardHeader>
+              <CardContent className="px-2 pb-2">
+                <div className="space-y-1">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setFileFilter(cat.id as any)}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        fileFilter === cat.id 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {cat.icon}
+                        <span>{cat.name}</span>
+                      </div>
+                      <span className={`text-xs ml-2 ${fileFilter === cat.id ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{cat.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="col-span-12 md:col-span-9 space-y-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  data-testid="search-documents"
+                  className="w-full rounded-md border border-input bg-background py-2 pl-10 pr-4 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SortAsc className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="size-asc">Size (Smallest)</SelectItem>
+                    <SelectItem value="size-desc">Size (Largest)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+        <Card 
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`transition-colors duration-200 ${isDragging ? 'border-primary bg-primary/5' : ''}`}
+        >
+          <CardHeader className="pb-3 px-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Your Documents</CardTitle>
+                <CardDescription>Manage and organize your uploaded files.</CardDescription>
+              </div>
+              {docs.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+                  <Checkbox 
+                    checked={selectedIds.size === docs.length && docs.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {documentsQuery.isLoading ? (
+            {isLoading ? (
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : documentsQuery.isError ? (
+            ) : isError ? (
               <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
                 Failed to load documents. Please refresh.
               </div>
             ) : docs.length === 0 ? (
-              <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-border">
-                <FileText className="h-12 w-12 text-muted-foreground" />
+              <div className={`flex h-64 flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed ${isDragging ? 'border-primary' : 'border-border'}`}>
+                <FileText className={`h-12 w-12 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
                 <div className="text-center">
-                  <p className="text-lg font-medium text-foreground">No documents yet</p>
+                  <p className="text-lg font-medium text-foreground">
+                    {isDragging ? 'Drop file to upload' : 'No documents yet'}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Upload your first document to get started.
+                    {isDragging ? 'Release your mouse to start the upload' : 'Upload your first document to get started.'}
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadMutation.isPending}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Document
-                </Button>
+                {!isDragging && (
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Document
+                  </Button>
+                )}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-border">
                 {docs.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                    className={`group flex items-center gap-3 p-4 transition-colors ${selectedIds.has(doc.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">{doc.title}</p>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {doc.original_filename}
+                    <Checkbox 
+                      checked={selectedIds.has(doc.id)}
+                      onCheckedChange={() => toggleSelect(doc.id)}
+                      className="transition-opacity"
+                    />
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setDetailsDoc(doc)}>
+                      <p className="truncate font-medium text-foreground group-hover:text-primary transition-colors">
+                        {doc.title}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(doc.size_bytes)} •{' '}
-                        {new Date(doc.created_at).toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        <span className="uppercase font-bold text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                          {doc.mime_type.split('/')[1] || 'FILE'}
+                        </span>
+                        <span>{formatFileSize(doc.size_bytes)}</span>
+                        <span>•</span>
+                        <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button
-                        variant={bookmarkedIds.has(doc.id) ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => bookmarkMutation.mutate(doc)}
-                        disabled={bookmarkMutation.isPending || bookmarksQuery.isLoading}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setPreviewDoc(doc)}
                       >
-                        <Bookmark className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(doc)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setDetailsDoc(doc)}>
+                            <Info className="mr-2 h-4 w-4" />
+                            Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleBookmark(doc)}>
+                            <Bookmark className={`mr-2 h-4 w-4 ${bookmarkedIds.has(doc.id) ? 'fill-current' : ''}`} />
+                            {bookmarkedIds.has(doc.id) ? 'Remove Bookmark' : 'Bookmark'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadDocument(doc)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => deleteDocument(doc)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}
@@ -401,6 +410,119 @@ export default function Documents() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  </div>
+
+  <DocumentPreview
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        document={previewDoc}
+      />
+
+      {/* Floating Batch Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-foreground text-background px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl border border-border/10">
+            <div className="flex items-center gap-2 border-r border-background/20 pr-6">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <span className="font-bold text-sm">{selectedIds.size} Selected</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 hover:bg-background/10 text-background px-3"
+                onClick={handleBatchDownload}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 hover:bg-destructive/20 hover:text-destructive text-background px-3"
+                onClick={handleBatchDelete}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 hover:bg-background/10 text-background ml-2"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* File Details Sidebar */}
+      <Sheet open={Boolean(detailsDoc)} onOpenChange={(open) => !open && setDetailsDoc(null)}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="mb-8">
+            <div className="p-4 bg-primary/10 w-fit rounded-xl mb-4">
+              <FileText className="h-10 w-10 text-primary" />
+            </div>
+            <SheetTitle className="text-2xl font-bold truncate pr-6">{detailsDoc?.title}</SheetTitle>
+            <SheetDescription>Document Metadata & Details</SheetDescription>
+          </SheetHeader>
+          
+          {detailsDoc && (
+            <div className="space-y-8">
+              <div className="grid gap-6">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Original Filename</p>
+                  <p className="text-sm font-medium break-all">{detailsDoc.original_filename}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Type</p>
+                    <p className="text-sm font-medium uppercase">{detailsDoc.mime_type.split('/')[1] || 'Unknown'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Size</p>
+                    <p className="text-sm font-medium">{formatFileSize(detailsDoc.size_bytes)}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Uploaded At</p>
+                  <p className="text-sm font-medium">{new Date(detailsDoc.created_at).toLocaleString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Storage Path</p>
+                  <code className="text-[10px] block p-2 bg-muted rounded truncate">{detailsDoc.storage_path}</code>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-6 border-t border-border">
+                <Button className="w-full flex justify-between px-4 h-12" onClick={() => { setPreviewDoc(detailsDoc); setDetailsDoc(null); }}>
+                  <span>Preview File</span>
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="w-full flex justify-between px-4 h-12" onClick={() => downloadDocument(detailsDoc)}>
+                  <span>Download File</span>
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className={`w-full flex justify-between px-4 h-12 ${bookmarkedIds.has(detailsDoc.id) ? 'bg-primary/5 border-primary/20' : ''}`}
+                  onClick={() => toggleBookmark(detailsDoc)}
+                >
+                  <span>{bookmarkedIds.has(detailsDoc.id) ? 'Remove Bookmark' : 'Add to Bookmarks'}</span>
+                  <Bookmark className={`h-4 w-4 ${bookmarkedIds.has(detailsDoc.id) ? 'fill-current text-primary' : ''}`} />
+                </Button>
+                <Button variant="destructive" className="w-full flex justify-between px-4 h-12" onClick={() => { if(confirm('Are you sure?')) deleteDocument(detailsDoc); setDetailsDoc(null); }}>
+                  <span>Delete Permanently</span>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 }

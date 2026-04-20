@@ -44,8 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isDemoAuthEnabled = import.meta.env.VITE_ENABLE_DEMO_AUTH === 'true';
 
   useEffect(() => {
+    if (isDemoAuthEnabled) {
+      setUser(DEMO_USER);
+      setSession(null);
+      setLoading(false);
+      return;
+    }
+
     if (!supabaseConfigured) {
-      setUser(isDemoAuthEnabled ? DEMO_USER : null);
+      setUser(null);
       setSession(null);
       setLoading(false);
       return;
@@ -69,6 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabaseConfigured, isDemoAuthEnabled]);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
+    if (isDemoAuthEnabled) {
+      setUser(DEMO_USER);
+      return { error: null };
+    }
+
     if (!supabaseConfigured) {
       return {
         error: new Error(
@@ -90,6 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (isDemoAuthEnabled) {
+      setUser(DEMO_USER);
+      return { error: null };
+    }
+
     if (!supabaseConfigured) {
       return {
         error: new Error(
@@ -103,6 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (isDemoAuthEnabled) {
+      setUser(null);
+      return;
+    }
     if (!supabaseConfigured) return;
     await supabase.auth.signOut();
   };

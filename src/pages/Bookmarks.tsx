@@ -1,11 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bookmark, Download, Loader2, X } from 'lucide-react';
+import { Bookmark, Download, Loader2, X, Eye, FileText } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { useDocuments, type DocumentRow } from '@/hooks/useDocuments';
+import { formatFileSize } from '@/lib/formatters';
+import type { Tables } from '@/integrations/supabase/types';
 
 type BookmarkResult = {
   id: string;
@@ -22,76 +24,17 @@ type BookmarkResult = {
   } | null;
 };
 
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
-
 export default function Bookmarks() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const bookmarksQuery = useQuery({
-    queryKey: ['bookmarks', user?.id],
-    enabled: Boolean(user?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select(
-          'id, created_at, document_id, documents:document_id(id, title, original_filename, mime_type, size_bytes, storage_path, created_at)',
-        )
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []) as BookmarkResult[];
-    },
-  });
-
-  const removeBookmarkMutation = useMutation({
-    mutationFn: async (bookmarkId: string) => {
-      const { error } = await supabase.from('bookmarks').delete().eq('id', bookmarkId);
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] }),
-        queryClient.invalidateQueries({ queryKey: ['documents', user?.id] }),
-        queryClient.invalidateQueries({ queryKey: ['documents-search', user?.id] }),
-      ]);
-      toast({ title: 'Bookmark removed', description: 'Removed from saved documents.' });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Remove failed',
-        description: error.message,
-      });
-    },
-  });
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const { bookmarks, isLoading, toggleBookmark } = useBookmarks();
+  const { downloadDocument } = useDocuments();
 
   const handleDownload = async (item: BookmarkResult) => {
     if (!item.documents) return;
-
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(item.documents.storage_path, 60);
-
-    if (error || !data?.signedUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Download failed',
-        description: error?.message || 'Could not create a download link.',
-      });
-      return;
-    }
-
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    await downloadDocument(item.documents as DocumentRow);
   };
 
-  const items = (bookmarksQuery.data ?? []).filter((item) => item.documents);
+  const items = (bookmarks as unknown as BookmarkResult[]).filter((item) => item.documents);
 
   return (
     <AppLayout>
@@ -101,61 +44,70 @@ export default function Bookmarks() {
           <p className="text-muted-foreground">Your saved documents and collections</p>
         </div>
 
-        <Card>
+        <Card className="border-muted/60">
           <CardHeader>
             <CardTitle>Saved Documents</CardTitle>
             <CardDescription>Documents you've bookmarked for later</CardDescription>
           </CardHeader>
           <CardContent>
-            {bookmarksQuery.isLoading ? (
+            {isLoading ? (
               <div className="flex h-32 items-center justify-center text-muted-foreground">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            ) : bookmarksQuery.isError ? (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                Failed to load bookmarks. Please refresh.
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : items.length === 0 ? (
-              <div className="flex h-64 flex-col items-center justify-center gap-4">
-                <Bookmark className="h-12 w-12 text-muted-foreground" />
+              <div className="flex h-64 flex-col items-center justify-center gap-4 text-muted-foreground">
+                <div className="p-4 bg-muted/40 rounded-full">
+                  <Bookmark className="h-10 w-10 opacity-40" />
+                </div>
                 <div className="text-center">
                   <p className="text-lg font-medium text-foreground">No bookmarks yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Save documents to access them quickly later
+                  <p className="text-sm">
+                    Save documents to access them quickly later.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                    className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-muted/50 bg-card p-4 hover:border-primary/50 hover:shadow-sm transition-all"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => toggleBookmark(item.documents as DocumentRow)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 min-w-0">
+                      <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {item.documents?.title}
                       </p>
-                      <p className="truncate text-sm text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground mt-1">
                         {item.documents?.original_filename}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.documents?.mime_type} �{' '}
-                        {formatFileSize(item.documents?.size_bytes ?? 0)}
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 mt-2">
+                        {item.documents?.mime_type.split('/')[1] || 'FILE'} • {formatFileSize(item.documents?.size_bytes ?? 0)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(item)}>
-                        <Download className="mr-2 h-4 w-4" />
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <Button variant="secondary" size="sm" className="flex-1 text-xs h-8" onClick={() => handleDownload(item)}>
+                        <Download className="mr-2 h-3 w-3" />
                         Download
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeBookmarkMutation.mutate(item.id)}
-                        disabled={removeBookmarkMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
+                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setPreviewDoc(item.documents as DocumentRow)}>
+                        <Eye className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -165,6 +117,12 @@ export default function Bookmarks() {
           </CardContent>
         </Card>
       </div>
+
+      <DocumentPreview 
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        document={previewDoc}
+      />
     </AppLayout>
   );
 }
