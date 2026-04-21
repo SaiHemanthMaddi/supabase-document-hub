@@ -10,20 +10,24 @@ A full-stack document management web app built with React + Vite + TypeScript an
 
 - Email/password auth (sign up, sign in, forgot/reset password)
 - Protected routing and public-only auth routing
+- **Dark Mode Support**: Seamless Light/Dark/System theme toggling.
 - Profile management:
   - Display name, bio, phone, address
   - Avatar upload (camera + device), crop controls, remove photo
-- Document management:
+- **Advanced Document management**:
   - Upload, list, download, delete
-  - File type/size validations
-- Bookmarks for documents
-- Search page for document discovery
-- Dashboard metrics and recent activity
+  - **Document Preview**: Secure viewing for PDFs, images, and text files.
+  - **File Details Sidebar**: Deep metadata and quick actions for each file.
+  - **Batch Actions**: Multi-select for bulk downloads and deletions.
+  - **Advanced Sorting & Filtering**: Organize by Name, Date, Size, or File Type.
+- **Document Categories**: View files organized into virtual folders.
+- **Activity Log**: Comprehensive audit trail of document interactions.
+- Bookmarks for documents.
+- Dashboard metrics and recent activity with quick previews.
 - Settings:
-  - Change email
-  - Change password
-  - Sign out current session / all sessions
-- Supabase RLS and storage policy hardening
+  - Change email/password
+  - Session management (sign out current/all)
+- Supabase RLS and storage policy hardening.
 
 ## Screenshots and Demo
 
@@ -58,14 +62,16 @@ Add your images/GIFs to `docs/assets/` using the names below.
 
 ```text
 src/
-  components/
-  hooks/
-  integrations/supabase/
-  lib/
-  pages/
-  test/
+  components/    # Reusable UI components (shadcn/ui + custom)
+  hooks/         # Feature hooks (useDocuments, useBookmarks, useProfile)
+  integrations/  # Supabase client and integrations
+  lib/           # Shared utilities (formatters, sanitizers, constants)
+  pages/         # Page-level components
+  test/          # Unit and integration tests
 supabase/
-  migrations/
+  migrations/    # Database schema and RLS policies
+  seeds/         # Optional demo data
+e2e/             # Playwright E2E tests
 ```
 
 ## Prerequisites
