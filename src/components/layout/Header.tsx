@@ -35,7 +35,11 @@ export function Header() {
     navigate('/auth');
   };
 
-  const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.display_name || 'User';
+  const displayName =
+    profile?.display_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.display_name ||
+    'User';
   const avatarCropX = profile?.avatar_crop_x ?? 50;
   const avatarCropY = profile?.avatar_crop_y ?? 50;
   const avatarZoom = profile?.avatar_zoom ?? 1;
@@ -63,54 +67,54 @@ export function Header() {
       <div className="flex items-center gap-4">
         <ThemeToggle />
         <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10 overflow-hidden">
-              {avatarUrl && !avatarLoadFailed ? (
-                <img
-                  src={avatarUrl}
-                  alt="User avatar"
-                  className="h-full w-full object-cover"
-                  style={avatarImageStyle(avatarCropX, avatarCropY, avatarZoom)}
-                  onError={() => setAvatarLoadFailed(true)}
-                />
-              ) : null}
-              <AvatarFallback
-                className="bg-primary text-primary-foreground"
-                style={{ display: avatarUrl && !avatarLoadFailed ? 'none' : 'flex' }}
-              >
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{displayName}</p>
-              <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate('/profile')}>
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/activity')}>
-            <History className="mr-2 h-4 w-4" />
-            Activity Log
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/settings')}>
-            <SettingsIcon className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10 overflow-hidden">
+                {avatarUrl && !avatarLoadFailed ? (
+                  <img
+                    src={avatarUrl}
+                    alt="User avatar"
+                    className="h-full w-full object-cover"
+                    style={avatarImageStyle(avatarCropX, avatarCropY, avatarZoom)}
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
+                ) : null}
+                <AvatarFallback
+                  className="bg-primary text-primary-foreground"
+                  style={{ display: avatarUrl && !avatarLoadFailed ? 'none' : 'flex' }}
+                >
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/activity')}>
+              <History className="mr-2 h-4 w-4" />
+              Activity Log
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

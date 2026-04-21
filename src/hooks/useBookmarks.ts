@@ -18,9 +18,7 @@ export function useBookmarks() {
     queryKey: ['bookmarks', user?.id],
     enabled: Boolean(user?.id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select('*, documents(*)');
+      const { data, error } = await supabase.from('bookmarks').select('*, documents(*)');
 
       if (error) throw error;
       return data ?? [];

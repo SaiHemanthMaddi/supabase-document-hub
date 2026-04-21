@@ -72,14 +72,14 @@ export function useProfile() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (!data) {
-        const fallbackDisplayName = 
-          (user?.user_metadata?.full_name as string | undefined) || 
-          (user?.user_metadata?.display_name as string | undefined) || 
+        const fallbackDisplayName =
+          (user?.user_metadata?.full_name as string | undefined) ||
+          (user?.user_metadata?.display_name as string | undefined) ||
           null;
         const fallbackAvatarPath = await resolveLatestAvatarPath(user!.id);
-        
+
         const { error: insertError } = await supabase.from('profiles').insert({
           user_id: user!.id,
           display_name: fallbackDisplayName,
@@ -111,7 +111,10 @@ export function useProfile() {
       if (!resolvedAvatarPath) {
         resolvedAvatarPath = await resolveLatestAvatarPath(user!.id);
         if (resolvedAvatarPath) {
-          await supabase.from('profiles').update({ avatar_path: resolvedAvatarPath }).eq('user_id', user!.id);
+          await supabase
+            .from('profiles')
+            .update({ avatar_path: resolvedAvatarPath })
+            .eq('user_id', user!.id);
         }
       }
 
@@ -221,7 +224,10 @@ export function useProfile() {
     profile: profileQuery.data,
     avatarUrl: avatarUrlQuery.data,
     isLoading: profileQuery.isLoading || avatarUrlQuery.isLoading,
-    isUpdating: updateProfileMutation.isPending || avatarUploadMutation.isPending || removeAvatarMutation.isPending,
+    isUpdating:
+      updateProfileMutation.isPending ||
+      avatarUploadMutation.isPending ||
+      removeAvatarMutation.isPending,
     updateProfile: updateProfileMutation.mutateAsync,
     uploadAvatar: avatarUploadMutation.mutateAsync,
     removeAvatar: removeAvatarMutation.mutateAsync,

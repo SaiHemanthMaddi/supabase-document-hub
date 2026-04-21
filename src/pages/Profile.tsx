@@ -22,11 +22,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { logActivity } from '@/lib/activity';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfile, type ProfileRow } from '@/hooks/useProfile';
-import { 
-  canvasToBlob, 
-  avatarImageStyle, 
-  validateProfileInputs 
-} from '@/lib/profile-utils';
+import { canvasToBlob, avatarImageStyle, validateProfileInputs } from '@/lib/profile-utils';
 import { sanitizeFileName } from '@/lib/sanitizers';
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
@@ -112,7 +108,7 @@ export default function Profile() {
         phone_number: phoneNumber.trim() || null,
         address: address.trim() || null,
       });
-      
+
       if (user?.id) {
         await logActivity({
           user_id: user.id,
@@ -124,8 +120,9 @@ export default function Profile() {
           },
         });
       }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Save failed', description: error.message });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ variant: 'destructive', title: 'Save failed', description: errorMessage });
     }
   };
 
@@ -324,12 +321,7 @@ export default function Profile() {
                 onChange={handleAvatarFile}
               />
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={openCamera}
-                  disabled={isUpdating}
-                >
+                <Button type="button" variant="outline" onClick={openCamera} disabled={isUpdating}>
                   {isUpdating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -549,10 +541,7 @@ export default function Profile() {
             <Button variant="outline" onClick={handleCloseCropModal}>
               Cancel
             </Button>
-            <Button
-              onClick={handleApplyCrop}
-              disabled={isAvatarUploading || !pendingAvatarFile}
-            >
+            <Button onClick={handleApplyCrop} disabled={isAvatarUploading || !pendingAvatarFile}>
               {isAvatarUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Apply & Upload
             </Button>

@@ -70,14 +70,14 @@ export function useAccount() {
   const signOutAllSessionsMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not authenticated');
-      
+
       await logActivity({
         user_id: user.id,
         event_type: 'all_sessions_logged_out',
         entity_type: 'security',
         entity_id: null,
       });
-      
+
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
     },
@@ -100,14 +100,14 @@ export function useAccount() {
   const signOutCurrentDeviceMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not authenticated');
-      
+
       await logActivity({
         user_id: user.id,
         event_type: 'current_session_logged_out',
         entity_type: 'security',
         entity_id: null,
       });
-      
+
       await signOut();
     },
     onSuccess: () => {
@@ -131,6 +131,10 @@ export function useAccount() {
     isSigningOutAll: signOutAllSessionsMutation.isPending,
     signOutCurrentDevice: signOutCurrentDeviceMutation.mutateAsync,
     isSigningOutCurrent: signOutCurrentDeviceMutation.isPending,
-    isBusy: updateEmailMutation.isPending || updatePasswordMutation.isPending || signOutAllSessionsMutation.isPending || signOutCurrentDeviceMutation.isPending,
+    isBusy:
+      updateEmailMutation.isPending ||
+      updatePasswordMutation.isPending ||
+      signOutAllSessionsMutation.isPending ||
+      signOutCurrentDeviceMutation.isPending,
   };
 }

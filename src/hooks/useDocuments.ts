@@ -121,9 +121,9 @@ export function useDocuments() {
   const batchDeleteMutation = useMutation({
     mutationFn: async (docsToDelete: DocumentRow[]) => {
       if (!user?.id) throw new Error('You must be signed in.');
-      
-      const ids = docsToDelete.map(d => d.id);
-      const paths = docsToDelete.map(d => d.storage_path);
+
+      const ids = docsToDelete.map((d) => d.id);
+      const paths = docsToDelete.map((d) => d.storage_path);
 
       const { error: deleteRowError } = await supabase.from('documents').delete().in('id', ids);
       if (deleteRowError) throw deleteRowError;

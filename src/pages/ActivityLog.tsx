@@ -2,41 +2,49 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useActivity } from '@/hooks/useActivity';
 import { formatDate } from '@/lib/formatters';
-import { 
-  FileUp, 
-  Trash2, 
-  Download, 
-  Settings, 
-  User, 
-  Bookmark, 
-  Eye, 
-  Shield, 
+import {
+  FileUp,
+  Trash2,
+  Download,
+  Settings,
+  User,
+  Bookmark,
+  Eye,
+  Shield,
   Loader2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 
 const getEventIcon = (type: string) => {
   switch (type) {
-    case 'document_uploaded': return <FileUp className="h-4 w-4 text-blue-500" />;
-    case 'document_deleted': return <Trash2 className="h-4 w-4 text-red-500" />;
-    case 'document_downloaded': return <Download className="h-4 w-4 text-green-500" />;
-    case 'bookmark_added': return <Bookmark className="h-4 w-4 text-amber-500 fill-amber-500" />;
-    case 'bookmark_removed': return <Bookmark className="h-4 w-4 text-muted-foreground" />;
-    case 'profile_updated': return <User className="h-4 w-4 text-purple-500" />;
-    case 'avatar_uploaded': return <Eye className="h-4 w-4 text-indigo-500" />;
+    case 'document_uploaded':
+      return <FileUp className="h-4 w-4 text-blue-500" />;
+    case 'document_deleted':
+      return <Trash2 className="h-4 w-4 text-red-500" />;
+    case 'document_downloaded':
+      return <Download className="h-4 w-4 text-green-500" />;
+    case 'bookmark_added':
+      return <Bookmark className="h-4 w-4 text-amber-500 fill-amber-500" />;
+    case 'bookmark_removed':
+      return <Bookmark className="h-4 w-4 text-muted-foreground" />;
+    case 'profile_updated':
+      return <User className="h-4 w-4 text-purple-500" />;
+    case 'avatar_uploaded':
+      return <Eye className="h-4 w-4 text-indigo-500" />;
     case 'email_change_requested':
     case 'password_updated':
     case 'all_sessions_logged_out':
     case 'current_session_logged_out':
       return <Shield className="h-4 w-4 text-orange-500" />;
-    default: return <Settings className="h-4 w-4 text-muted-foreground" />;
+    default:
+      return <Settings className="h-4 w-4 text-muted-foreground" />;
   }
 };
 
 const formatEventName = (type: string) => {
   return type
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
 
@@ -48,7 +56,9 @@ export default function ActivityLog() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Activity Log</h1>
-          <p className="text-muted-foreground">A detailed audit trail of your account activities.</p>
+          <p className="text-muted-foreground">
+            A detailed audit trail of your account activities.
+          </p>
         </div>
 
         <Card>
@@ -102,8 +112,10 @@ export default function ActivityLog() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="max-w-xs truncate text-xs text-muted-foreground">
-                            {log.metadata && typeof log.metadata === 'object' 
-                              ? Object.entries(log.metadata).map(([k, v]) => `${k}: ${v}`).join(', ')
+                            {log.metadata && typeof log.metadata === 'object'
+                              ? Object.entries(log.metadata)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(', ')
                               : '-'}
                           </div>
                         </td>

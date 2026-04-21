@@ -13,16 +13,16 @@ import { useAccount } from '@/hooks/useAccount';
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { 
-    updateEmail, 
-    updatePassword, 
-    signOutAllSessions, 
+  const {
+    updateEmail,
+    updatePassword,
+    signOutAllSessions,
     signOutCurrentDevice,
     isUpdatingEmail,
     isUpdatingPassword,
     isSigningOutAll,
     isSigningOutCurrent,
-    isBusy 
+    isBusy,
   } = useAccount();
 
   const [newEmail, setNewEmail] = useState('');

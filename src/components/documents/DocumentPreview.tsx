@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, ExternalLink, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,9 +42,10 @@ export function DocumentPreview({ isOpen, onClose, document }: DocumentPreviewPr
       if (data?.signedUrl) {
         setUrl(data.signedUrl);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching signed URL:', err);
-      setError(err.message || 'Failed to load preview');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load preview';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -65,7 +61,7 @@ export function DocumentPreview({ isOpen, onClose, document }: DocumentPreviewPr
         <DialogHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
           <DialogTitle className="truncate pr-8">{document?.title}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex-1 relative bg-muted/30 flex items-center justify-center overflow-auto">
           {loading && (
             <div className="flex flex-col items-center gap-2">
@@ -84,13 +80,13 @@ export function DocumentPreview({ isOpen, onClose, document }: DocumentPreviewPr
           {!loading && !error && url && (
             <>
               {isImage && (
-                <img 
-                  src={url} 
-                  alt={document?.title} 
-                  className="max-w-full max-h-full object-contain shadow-lg" 
+                <img
+                  src={url}
+                  alt={document?.title}
+                  className="max-w-full max-h-full object-contain shadow-lg"
                 />
               )}
-              
+
               {isPdf && (
                 <iframe
                   src={`${url}#toolbar=0`}
@@ -109,7 +105,9 @@ export function DocumentPreview({ isOpen, onClose, document }: DocumentPreviewPr
 
               {!isImage && !isPdf && !isPlainText && (
                 <div className="text-center p-6">
-                  <p className="mb-4">Preview not available for this file type ({document?.mime_type})</p>
+                  <p className="mb-4">
+                    Preview not available for this file type ({document?.mime_type})
+                  </p>
                   <Button asChild>
                     <a href={url} target="_blank" rel="noopener noreferrer">
                       <Download className="mr-2 h-4 w-4" />
@@ -123,9 +121,7 @@ export function DocumentPreview({ isOpen, onClose, document }: DocumentPreviewPr
         </div>
 
         <div className="p-4 border-t flex justify-between items-center bg-card">
-          <p className="text-xs text-muted-foreground">
-            Securely served from Supabase Storage
-          </p>
+          <p className="text-xs text-muted-foreground">Securely served from Supabase Storage</p>
           <div className="flex gap-2">
             {url && (
               <Button variant="outline" size="sm" asChild>

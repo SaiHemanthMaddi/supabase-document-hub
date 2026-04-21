@@ -61,9 +61,7 @@ export default function Bookmarks() {
                 </div>
                 <div className="text-center">
                   <p className="text-lg font-medium text-foreground">No bookmarks yet</p>
-                  <p className="text-sm">
-                    Save documents to access them quickly later.
-                  </p>
+                  <p className="text-sm">Save documents to access them quickly later.</p>
                 </div>
               </div>
             ) : (
@@ -88,7 +86,7 @@ export default function Bookmarks() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 min-w-0">
                       <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {item.documents?.title}
@@ -97,16 +95,27 @@ export default function Bookmarks() {
                         {item.documents?.original_filename}
                       </p>
                       <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/60 mt-2">
-                        {item.documents?.mime_type.split('/')[1] || 'FILE'} • {formatFileSize(item.documents?.size_bytes ?? 0)}
+                        {item.documents?.mime_type.split('/')[1] || 'FILE'} •{' '}
+                        {formatFileSize(item.documents?.size_bytes ?? 0)}
                       </p>
                     </div>
 
                     <div className="mt-4 flex items-center gap-2">
-                      <Button variant="secondary" size="sm" className="flex-1 text-xs h-8" onClick={() => handleDownload(item)}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex-1 text-xs h-8"
+                        onClick={() => handleDownload(item)}
+                      >
                         <Download className="mr-2 h-3 w-3" />
                         Download
                       </Button>
-                      <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setPreviewDoc(item.documents as DocumentRow)}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() => setPreviewDoc(item.documents as DocumentRow)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
@@ -118,7 +127,7 @@ export default function Bookmarks() {
         </Card>
       </div>
 
-      <DocumentPreview 
+      <DocumentPreview
         isOpen={Boolean(previewDoc)}
         onClose={() => setPreviewDoc(null)}
         document={previewDoc}

@@ -98,7 +98,11 @@ export default function Index() {
     },
   ];
 
-  const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.display_name || 'User';
+  const displayName =
+    profile?.display_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.display_name ||
+    'User';
   const recentActivities = activityQuery.data ?? [];
 
   const activityLabel = (activity: ActivityLogRow) => {
@@ -136,17 +140,24 @@ export default function Index() {
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground lg:text-5xl">
             Welcome back{displayName ? `, ${displayName}` : ''}
           </h1>
-          <p className="text-lg text-muted-foreground mt-2">Manage your documents with ease and security.</p>
+          <p className="text-lg text-muted-foreground mt-2">
+            Manage your documents with ease and security.
+          </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <Card key={stat.title} className="overflow-hidden transition-all hover:shadow-md group border-muted/60">
+              <Card
+                key={stat.title}
+                className="overflow-hidden transition-all hover:shadow-md group border-muted/60"
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <div className={`p-2 rounded-full ${stat.bgColor} ${stat.color} group-hover:scale-110 transition-transform`}>
+                  <div
+                    className={`p-2 rounded-full ${stat.bgColor} ${stat.color} group-hover:scale-110 transition-transform`}
+                  >
                     <Icon className="h-4 w-4" />
                   </div>
                 </CardHeader>
@@ -170,7 +181,12 @@ export default function Index() {
                 <CardTitle>Recent Documents</CardTitle>
                 <CardDescription>Your recently uploaded items</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/documents')} className="text-primary font-medium">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/documents')}
+                className="text-primary font-medium"
+              >
                 View All <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </CardHeader>
@@ -185,19 +201,29 @@ export default function Index() {
                     <FileText className="h-8 w-8 opacity-40" />
                   </div>
                   <p>No documents yet. Start by uploading your first one.</p>
-                  <Button size="sm" onClick={() => navigate('/documents')}>Upload Now</Button>
+                  <Button size="sm" onClick={() => navigate('/documents')}>
+                    Upload Now
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {docs.slice(0, 5).map((doc) => (
-                    <div key={doc.id} className="group flex items-center justify-between rounded-lg border border-muted/50 p-3 hover:border-primary/50 transition-colors">
+                    <div
+                      key={doc.id}
+                      className="group flex items-center justify-between rounded-lg border border-muted/50 p-3 hover:border-primary/50 transition-colors"
+                    >
                       <div className="min-w-0 mr-4">
                         <p className="font-medium text-foreground truncate">{doc.title}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {doc.original_filename} • {formatFileSize(doc.size_bytes)}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setPreviewDoc(doc)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setPreviewDoc(doc)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
@@ -219,7 +245,7 @@ export default function Index() {
                 </div>
               ) : recentActivities.length === 0 ? (
                 <div className="flex flex-col h-48 items-center justify-center text-muted-foreground gap-4">
-                   <div className="p-4 bg-muted/40 rounded-full">
+                  <div className="p-4 bg-muted/40 rounded-full">
                     <Clock3 className="h-8 w-8 opacity-40" />
                   </div>
                   <p>Your activity list is currently empty.</p>
@@ -227,12 +253,17 @@ export default function Index() {
               ) : (
                 <div className="space-y-4">
                   {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors">
+                    <div
+                      key={activity.id}
+                      className="flex gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors"
+                    >
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <div className="h-2 w-2 rounded-full bg-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground leading-tight">{activityLabel(activity)}</p>
+                        <p className="text-sm font-medium text-foreground leading-tight">
+                          {activityLabel(activity)}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(activity.created_at).toLocaleString()}
                         </p>
@@ -246,7 +277,7 @@ export default function Index() {
         </div>
       </div>
 
-      <DocumentPreview 
+      <DocumentPreview
         isOpen={Boolean(previewDoc)}
         onClose={() => setPreviewDoc(null)}
         document={previewDoc}
